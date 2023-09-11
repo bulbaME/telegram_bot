@@ -6,6 +6,7 @@ import os
 import ctypes
 
 MAX_TRIES = 2
+MAX_SITES = 4
 
 def send_ticket(url, subject, text, cred, n=None):
     i = 0
@@ -28,9 +29,12 @@ TICKET_PROC = {}
 
 def send_tickets_concurr(urls: list, subject: str, text: str, cred, status_callback=None):
 
-    with Pool(processes=os.cpu_count()) as pool:
-        for i in range(len(urls)):
-            pool.apply_async(send_ticket, args=(urls[i], subject, text, cred, i), callback=status_callback)
-            
-        pool.close()
-        pool.join()
+    i = 0
+    while i < len(urls):
+        with Pool(processes=os.cpu_count()) as pool:
+            for _ in range(MAX_SITES):
+                pool.apply_async(send_ticket, args=(urls[i], subject, text, cred, i), callback=status_callback)
+                i += 1
+
+            pool.close()
+            pool.join()
