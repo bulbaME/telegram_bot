@@ -33,6 +33,9 @@ def send_tickets_concurr(urls: list, subject: str, text: str, cred, status_callb
     while i < len(urls):
         with Pool(processes=os.cpu_count()) as pool:
             for _ in range(MAX_SITES):
+                if i == len(urls):
+                    break
+                
                 pool.apply_async(send_ticket, args=(urls[i], subject, text, cred, i), callback=status_callback)
                 i += 1
 
