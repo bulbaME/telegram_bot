@@ -1,0 +1,6 @@
+pyyaml
+selenium
+bs4
+2captcha-python
+colorama
+python-telegram-bot
