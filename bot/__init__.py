@@ -163,8 +163,8 @@ def init():
     list_sites_conversation = ConversationHandler(
         [list_handler],
         {
-            15: [CallbackQueryHandler(conv_list_add_group, pattern='^1$'), CallbackQueryHandler(conv_list_remove_group, pattern='^2$'), CallbackQueryHandler(conv_list_sites, pattern='^([1-9][0-9])$')],
-            16: [MessageHandler(filters.TEXT, conv_list_add_group_2)],
+            15: [list_handler, CallbackQueryHandler(conv_list_add_group, pattern='^1$'), CallbackQueryHandler(conv_list_remove_group, pattern='^2$'), CallbackQueryHandler(conv_list_sites, pattern='^([1-9][0-9])$')],
+            16: [list_handler, MessageHandler(filters.TEXT, conv_list_add_group_2)],
             17: [CallbackQueryHandler(conv_list_remove_group_2, pattern='^([1-9][0-9])$')],
             18: [list_handler, CallbackQueryHandler(conv_list_set_cred, pattern='^3$')],
             19: [MessageHandler(filters.TEXT, conv_list_set_cred_2)],
