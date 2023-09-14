@@ -6,7 +6,7 @@ import os
 import ctypes
 
 MAX_TRIES = 2
-MAX_SITES = 4
+MAX_SITES = 2
 
 def send_ticket(url, subject, text, cred, n=None):
     i = 0
@@ -16,7 +16,7 @@ def send_ticket(url, subject, text, cred, n=None):
             site_process(url, cred, subject, text)
             break
         except BaseException as e:
-            print_site_log(urlparse(url).netloc, e, err=True)
+            print_site_log(url, e, err=True)
 
         i += 1
 

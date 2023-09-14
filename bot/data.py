@@ -20,7 +20,7 @@ def data_dir():
 
     if not os.path.isfile('data/sites.json'):
         f = open('data/sites.json', 'w')
-        f.write('[]')
+        f.write('{}')
         f.close()
 
 def data_users_get() -> dict:

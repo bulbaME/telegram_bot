@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -34,15 +35,24 @@ def find_login_path(url) -> str:
             login_path = p
             break
 
+    login_path = urlparse(login_path).path
+
     return login_path
 
-def find_tickets_path(driver: webdriver.Firefox) -> str | None:
+def find_tickets_path(driver: webdriver.Firefox, visited: set = set()) -> str | None:
     tickets_path = None
 
+    sleep(3)
     WebDriverWait(driver, MAX_WAITING_TIME).until(expected_conditions.presence_of_element_located((By.TAG_NAME, 'body')))
+    if driver.current_url in visited:
+        return None
+    
+    visited.add(driver.current_url)
 
     try:
-        for l in driver.find_elements(by=By.TAG_NAME, value='a'):
+        for l in WebDriverWait(driver, MAX_WAITING_TIME).until(
+            expected_conditions.presence_of_all_elements_located((By.TAG_NAME, 'a'))
+        ):
             p = l.get_attribute('href').lower()
 
             if p.find('ticket') != -1:
@@ -50,32 +60,38 @@ def find_tickets_path(driver: webdriver.Firefox) -> str | None:
                 break
 
         if tickets_path == None:
-            for l in driver.find_elements(by=By.PARTIAL_LINK_TEXT, value='elp'):
+            for l in WebDriverWait(driver, MAX_WAITING_TIME).until(
+                expected_conditions.presence_of_all_elements_located((By.PARTIAL_LINK_TEXT, 'elp'))
+            ):
                 p = l.text.lower().strip()
 
                 if p.find('help') != -1:
                     l.click()
-                    tickets_path = find_tickets_path(driver)
+                    tickets_path = find_tickets_path(driver, visited=visited)
                     if tickets_path != None:
                         break
             
         if tickets_path == None:
-            for l in driver.find_elements(by=By.PARTIAL_LINK_TEXT, value='pport'):
+            for l in WebDriverWait(driver, MAX_WAITING_TIME).until(
+                expected_conditions.presence_of_all_elements_located((By.PARTIAL_LINK_TEXT, 'pport'))
+            ):
                 p = l.text.lower().strip()
 
                 if p.find('support') != -1:
                     l.click()
-                    tickets_path = find_tickets_path(driver)
+                    tickets_path = find_tickets_path(driver, visited=visited)
                     if tickets_path != None:
                         break
 
         if tickets_path == None:
-            for l in driver.find_elements(by=By.PARTIAL_LINK_TEXT, value='faq'):
+            for l in WebDriverWait(driver, MAX_WAITING_TIME).until(
+                expected_conditions.presence_of_all_elements_located((By.PARTIAL_LINK_TEXT, 'faq'))
+            ):
                 p = l.text.lower().strip()
 
                 if p.find('faq') != -1:
                     l.click()
-                    tickets_path = find_tickets_path(driver)
+                    tickets_path = find_tickets_path(driver, visited=visited)
                     if tickets_path != None:
                         break
 
@@ -100,22 +116,23 @@ def get_available_form(driver: webdriver.Firefox) -> WebElement | None:
 
     return form
 
-def site_process(url, credentials, subject, text):
-    site_name = urlparse(url).netloc
+def site_process(site_name, credentials, subject, text):
+    url = 'https://' + site_name
 
     driver_opt = Options()
-    driver_opt.headless = True
+    driver_service = Service(executable_path='./geckodriver.exe')
+    # driver_opt.headless = True
     driver_opt.add_argument("--window-size=800,800")
     driver_opt.page_load_strategy = 'eager'
 
-    driver = webdriver.Firefox(options=driver_opt)
+    driver = webdriver.Firefox(options=driver_opt, service=driver_service)
 
     try:
-        login_path = find_login_path(url)
+        login_path = url + find_login_path(url)
         driver.get(login_path)
         form = get_available_form(driver)
 
-        sleep(1)
+        sleep(3)
         captcha = None
 
         try:
@@ -137,7 +154,11 @@ def site_process(url, credentials, subject, text):
         )
 
         inputs = list(filter(lambda e: e.is_displayed(), inputs))
+        inputs[0].clear()
+        inputs[0].click()
         inputs[0].send_keys(credentials['username'])
+        inputs[1].clear()
+        inputs[1].click()
         inputs[1].send_keys(credentials['password'])
 
         captcha_response = {}
@@ -146,6 +167,9 @@ def site_process(url, credentials, subject, text):
             e = driver.find_element(by=By.CLASS_NAME, value='g-recaptcha')
             k = e.get_attribute('data-sitekey')
             print_site_log(site_name, 'Captcha detected')
+
+            if len(k) == 0:
+                raise BaseException('Site recaptcha failed')
 
             try:
                 captcha_response = CAPTCHA_SOLVER.recaptcha(k, driver.current_url)
@@ -173,7 +197,9 @@ def site_process(url, credentials, subject, text):
         else:
             print_site_log(site_name, 'Tickets page found')
 
+
         driver.get(tickets)
+        sleep(3)
         form = get_available_form(driver)
 
         selects = form.find_elements(by=By.TAG_NAME, value='select')
@@ -196,12 +222,15 @@ def site_process(url, credentials, subject, text):
         texts = list(filter(lambda e: e.is_displayed(), texts))
 
         if len(inputs) == 0:
+            texts[0].clear()
             texts[0].send_keys(f'{subject}:\n\n{text}')
         else:
+            inputs[0].clear()
             inputs[0].send_keys(subject)
+            texts[0].clear()
             texts[0].send_keys(text)
 
-        # form.screenshot(f'{site_name}.png')
+        form.screenshot(f'{site_name}.png')
         form.submit()
         sleep(1)
         print_site_log(site_name, 'Ticket sent successfully')
