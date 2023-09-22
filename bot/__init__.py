@@ -13,6 +13,9 @@ from .smm_forwarder import ticket as smm_frwd_ticket
 from .smm_forwarder import remove as smm_frwd_remove
 from .smm_forwarder import add as smm_frwd_add
 
+from . import web_search
+from . import mail_parser
+
 TOKEN = yaml.safe_load(open('credentials.yaml'))['tg']['token']
 
 logging.basicConfig(
@@ -69,6 +72,8 @@ def init():
     start_handler = CommandHandler('start', start)
     logout_handler = CommandHandler('logout', logout)
     forwarder_smm_handler = CommandHandler('smm_forwarder', smm_forwarder.forwarder_smm)
+    web_search_handler = CommandHandler('search_panel', web_search.web_search_menu)
+    mail_parser_handler = CommandHandler('mail_parser', mail_parser.mail_parser_command)
 
     auth_conversation = ConversationHandler(
         [start_handler],
@@ -147,13 +152,48 @@ def init():
                 CallbackQueryHandler(smm_forwarder.forwarder_smm, pattern=f'^{STEPS.MENU.SMM_FORWARDER}$'),
             ]
         },
-        []
+        [],
+        allow_reentry=True
     )
 
+    web_search_conversation = ConversationHandler(
+        [web_search_handler],
+        {
+            STEPS.WEB_SEARCH.ENTRY: [
+                CallbackQueryHandler(web_search.ask_country, pattern=f'^{STEPS.WEB_SEARCH.ENTRY}$'),
+            ],
+            STEPS.WEB_SEARCH.COUNTRY: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, web_search.ask_query),
+            ],
+            STEPS.WEB_SEARCH.QUERY: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, web_search.ask_pages),
+            ],
+            STEPS.WEB_SEARCH.PAGES: [
+                CallbackQueryHandler(web_search.proceed_search, pattern=f'^250[0-9]$'),
+            ]
+        },
+        [],
+        allow_reentry=True
+    )
 
+    mail_parser_conversation = ConversationHandler(
+        [mail_parser_handler],
+        {
+            STEPS.MAIL_PARSER.ENTRY: [
+                CallbackQueryHandler(mail_parser.mail_parse_command, pattern=f'^{STEPS.MAIL_PARSER.PROCEED}$'),
+            ],
+            STEPS.MAIL_PARSER.PROCEED: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, mail_parser.proceed_command),
+            ]
+        },
+        [],
+        allow_reentry=True
+    )
 
     application.add_handler(auth_conversation)
     application.add_handler(forwarder_smm_conversation)
+    application.add_handler(web_search_conversation)
+    application.add_handler(mail_parser_conversation)
     application.add_handler(logout_handler)
         
     application.run_polling(timeout=60, pool_timeout=30)

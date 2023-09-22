@@ -13,6 +13,7 @@ class STEPS:
 
     class MENU:
         SMM_FORWARDER = gci()
+        WEB_SEARCH = gci()
     
     class SMM_FORWARDER:
         class LIST:
@@ -38,3 +39,18 @@ class STEPS:
             CONFIRM = gci()
 
         BALANCE = gci()
+    
+    class WEB_SEARCH:
+        ENTRY = gci()
+        QUERY = gci()
+        COUNTRY = gci()
+        PAGES = gci()
+        PROCEED = gci()
+
+    class MAIL_PARSER:
+        ENTRY = gci()
+        PROCEED = gci()
+
+    class MAIL_SENDER:
+        ENTRY = gci()
+        PROCEED = gci()
