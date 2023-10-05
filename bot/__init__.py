@@ -20,7 +20,7 @@ TOKEN = yaml.safe_load(open('credentials.yaml'))['tg']['token']
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.ERROR
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
