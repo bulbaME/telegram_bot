@@ -1,6 +1,7 @@
 import json
 import requests
 import yaml
+from urllib.parse import urlparse
 
 CC = json.load(open('web_search/country_codes.json'))
 TOKEN = yaml.safe_load(open('credentials.yaml'))['serper']['token']
@@ -37,7 +38,16 @@ def get_sites(country_code: str, query: str, page: int) -> list:
     for v in o:
         l.add(v['link'])
 
-    return list(l)
+    l = list(l)
+
+    def fl(url):
+        u = urlparse(url)
+        if u.path.count('/') > 1: return False
+        return True
+
+    l = list(filter(fl, l))
+
+    return l
 
 def find_by_code(code: str) -> str:
     for o in CC:

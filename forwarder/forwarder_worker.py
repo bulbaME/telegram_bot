@@ -138,6 +138,7 @@ def site_process(site_name: str, credentials, subject, text):
     driver_opt = Options()
     # driver_service = Service(executable_path='')
     driver_opt.headless = True
+    driver_opt.add_argument('--headless')
     driver_opt.add_argument("--window-size=800,800")
     driver_opt.page_load_strategy = 'eager'
 
