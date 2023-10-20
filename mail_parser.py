@@ -56,16 +56,21 @@ def get_contact_mail(url: str, visited: set = set(), driver = None, sub=False) -
                 s = text[i:]
                 s = s.split()[0]
 
+                if s.find('@') == -1: continue
+
                 mail = s
                 break
 
         if mail == None and len(mails) > 0:
-            mails = mails[0].text.lower()
-            mails = mails.split()
             for m in mails:
-                if m.find('@') != None:
-                    mail = m
-                    break
+                m = m.text.lower()
+                m = m.split()
+                for n in m:
+                    if n.find('@') != -1:
+                        mail = n
+                        break
+                
+                if mail != None: break
 
         if mail == None and not sub: 
             links = driver.find_elements(by=By.TAG_NAME, value='a')
