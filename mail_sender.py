@@ -19,6 +19,7 @@ def send_mail(recievers: list[str], subject, content):
 
     mime_content = MIMEText(content, 'html')
     message = MIMEMultipart('alternative')
+    message['From'] = 'smmpanel'
     message['Subject'] = subject
     message.attach(mime_content)
 
