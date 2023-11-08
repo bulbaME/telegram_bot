@@ -53,4 +53,7 @@ class STEPS:
 
     class MAIL_SENDER:
         ENTRY = gci()
+        MAILS = gci()
+        SUBJECT = gci()
+        CONTENT = gci()
         PROCEED = gci()

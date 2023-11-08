@@ -33,6 +33,7 @@ async def passcode(update: Update, context: ContextTypes.DEFAULT_TYPE):
             BotCommand('smm_forwarder', 'Smm Forwarder Bot'),
             BotCommand('search_panel', 'Search Panel'),
             BotCommand('mail_parser', 'Parse Mail On Websites'),
+            BotCommand('mail_sender', 'Send emails'),
             BotCommand('logout', 'Logout'),
         ]
         await context.bot.set_my_commands(commands, telegram.BotCommandScopeChat(chat_id))

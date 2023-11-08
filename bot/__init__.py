@@ -15,6 +15,7 @@ from .smm_forwarder import add as smm_frwd_add
 
 from . import web_search
 from . import mail_parser
+from . import mail_sender
 
 TOKEN = yaml.safe_load(open('credentials.yaml'))['tg']['token']
 
@@ -74,6 +75,7 @@ def init():
     forwarder_smm_handler = CommandHandler('smm_forwarder', smm_forwarder.forwarder_smm)
     web_search_handler = CommandHandler('search_panel', web_search.web_search_menu)
     mail_parser_handler = CommandHandler('mail_parser', mail_parser.mail_parser_command)
+    mail_sender_handler = CommandHandler('mail_sender', mail_sender.email_sender_menu)
 
     auth_conversation = ConversationHandler(
         [start_handler],
@@ -190,10 +192,35 @@ def init():
         allow_reentry=True
     )
 
+    mail_sender_conversation = ConversationHandler(
+        [mail_sender_handler],
+        {
+            STEPS.MAIL_SENDER.ENTRY: [
+                CallbackQueryHandler(mail_sender.set_mails, pattern=f'^{STEPS.MAIL_SENDER.MAILS}$')
+            ],
+            STEPS.MAIL_SENDER.MAILS: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, mail_sender.set_subject)
+            ],
+            STEPS.MAIL_SENDER.SUBJECT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, mail_sender.set_content)
+            ],
+            STEPS.MAIL_SENDER.CONTENT: [
+                MessageHandler(filters.Document.ALL, mail_sender.confirm),
+            ],
+            STEPS.MAIL_SENDER.PROCEED: [
+                CallbackQueryHandler(mail_sender.send, pattern=f'^{STEPS.MAIL_SENDER.PROCEED}$'),
+                CallbackQueryHandler(mail_sender.email_sender_menu, pattern=f'^{STEPS.MAIL_SENDER.ENTRY}$'),
+            ]
+        },
+        [],
+        allow_reentry=True
+    )
+
     application.add_handler(auth_conversation)
     application.add_handler(forwarder_smm_conversation)
     application.add_handler(web_search_conversation)
     application.add_handler(mail_parser_conversation)
+    application.add_handler(mail_sender_conversation)
     application.add_handler(logout_handler)
         
     application.run_polling(timeout=60, pool_timeout=30)
