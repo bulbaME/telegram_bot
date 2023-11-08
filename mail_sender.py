@@ -25,9 +25,10 @@ def send_mail(recievers: list[str], subject, content):
 
     result = { v: True for v in recievers }
 
-    resp = smtp.sendmail(EMAIL, recievers, message.as_string())
-
-    for k in resp.keys():
-        result[k] = False
+    for r in recievers:
+        message['To'] = r
+        t = smtp.sendmail(EMAIL, r, message.as_string())
+        if len(t) > 0:
+            result[t.keys()[0]] = True
 
     return result
